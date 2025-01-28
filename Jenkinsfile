@@ -41,18 +41,17 @@ pipeline {
             }
         }
         stage('Trigger ArgoCD Sync') {
-            steps {
-                script {
-                    echo 'Logging into ArgoCD...'
-                    sh '''
-                        argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
-                        echo 'Syncing application in ArgoCD...'
-                        argocd app sync test1 || echo "ArgoCD Sync failed"
-                        echo 'Checking application status...'
-                        argocd app get test1
-                    '''
-                }
-            }
+    steps {
+        script {
+            echo 'Logging into ArgoCD...'
+            sh """
+                argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
+                echo 'Syncing application in ArgoCD...'
+                argocd app sync test1
+                echo 'ArgoCD sync triggered'
+            """
         }
     }
 }
+}
+    
