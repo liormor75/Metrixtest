@@ -8,10 +8,17 @@ pipeline {
             steps {
                 script {
                     echo "Syncing ArgoCD app with Docker image tag: ${params.IMAGE_TAG}"
-                    sh """
-                        argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
-                        argocd app sync nginx-app --refresh
-                    """
+                    try {
+                        sh """
+                            echo 'Logging into ArgoCD...'
+                            argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
+                            echo 'Syncing ArgoCD application...'
+                            argocd app sync nginx-app --refresh
+                        """
+                    } catch (Exception e) {
+                        echo "ArgoCD sync failed: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                    }
                 }
             }
         }
