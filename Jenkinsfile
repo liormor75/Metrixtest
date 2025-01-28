@@ -45,7 +45,7 @@ pipeline {
                 script {
                     sh """
                         # Log in to ArgoCD
-                        argocd login ${ARGOCD_SERVER} --username admin --password ${ARGOCD_PASSWORD} --insecure
+                        argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
                         # Sync the app in ArgoCD
                         argocd app sync ${ARGOCD_APP_NAME}
                     """
