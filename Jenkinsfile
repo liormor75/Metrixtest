@@ -29,3 +29,13 @@ pipeline {
         }
     }
 }
+stage('Trigger ArgoCD Sync') {
+    steps {
+        script {
+            sh """
+                argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
+                argocd app sync nginx-app
+            """
+        }
+    }
+}
