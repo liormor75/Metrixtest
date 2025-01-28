@@ -40,9 +40,9 @@ pipeline {
                 script {
                     echo 'Logging into ArgoCD...'
                     sh """
-                        argocd login ${ARGOCD_SERVER} --username admin --password 5uI43-Ig8qr3nmty --insecure
+                        argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
                         echo 'Syncing application in ArgoCD...'
-                        argocd app sync ${ARGOCD_APP_NAME}
+                        argocd app sync test1
                     """
                 }
             }
