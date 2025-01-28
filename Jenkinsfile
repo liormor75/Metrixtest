@@ -28,7 +28,6 @@ pipeline {
             }
         }
     }
-}
 stage('Trigger ArgoCD Sync') {
     steps {
         script {
@@ -38,4 +37,5 @@ stage('Trigger ArgoCD Sync') {
             """
         }
     }
+}
 }
