@@ -19,6 +19,7 @@ pipeline {
             steps {
                 script {
                     // Build Docker image
+                    echo "Building Docker image ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}..."
                     sh 'docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .'
                 }
             }
@@ -28,6 +29,7 @@ pipeline {
                 script {
                     // Use Jenkins credentials to login to Docker registry
                     withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        echo "Logging in to Docker registry ${DOCKER_REGISTRY}..."
                         sh """
                             echo \$DOCKER_PASSWORD | docker login \$DOCKER_REGISTRY -u \$DOCKER_USERNAME --password-stdin
                         """
@@ -38,20 +40,30 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Push the Docker image to local registry
+                    // Push the Docker image to the local registry
+                    echo "Pushing Docker image ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}..."
                     sh 'docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}'
+                }
+            }
+        }
+        stage('Update Kubernetes Deployment') {
+            steps {
+                script {
+                    // Ensure Kubernetes deployment YAML uses the latest image
+                    echo "Updating Kubernetes deployment with new Docker image ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}..."
+                    sh 'kubectl set image deployment/nginx-deployment nginx=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} --record'
                 }
             }
         }
         stage('Trigger ArgoCD Sync') {
             steps {
                 script {
-                    // Trigger ArgoCD Sync
-                    echo 'Triggering ArgoCD Sync'
+                    // Trigger ArgoCD sync to apply the changes
+                    echo "Triggering ArgoCD sync for application ${ARGOCD_APP_NAME}..."
                     withCredentials([usernamePassword(credentialsId: ARGOCD_CREDENTIALS_ID, usernameVariable: 'ARGOCD_USERNAME', passwordVariable: 'ARGOCD_PASSWORD')]) {
                         sh """
                             argocd login ${ARGOCD_SERVER} --username \$ARGOCD_USERNAME --password \$ARGOCD_PASSWORD --insecure
-                            argocd app sync ${ARGOCD_APP_NAME}
+                            argocd app sync ${ARGOCD_APP_NAME}  // This will ensure ArgoCD syncs the updated configuration
                         """
                     }
                 }
@@ -78,3 +90,4 @@ pipeline {
         }
     }
 }
+
