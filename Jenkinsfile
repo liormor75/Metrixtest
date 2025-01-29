@@ -9,7 +9,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 sh 'mkdir -p ~/.ssh && echo "StrictHostKeyChecking no" >> ~/.ssh/config'
-            }
                 git url: 'git@github.com:liormor75/Metrixtest.git', branch: 'main', credentialsId: 'github-ssh-key'
             }
         }
