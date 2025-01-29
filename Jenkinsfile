@@ -1,56 +1,49 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_REGISTRY = "localhost:5000"
-        IMAGE_NAME = "nginx-app"
-        GIT_REPO = "https://github.com/liormor75/Metrixtest.git"  // Replace with your actual Git repo URL
+        REGISTRY = 'localhost:5000'
+        IMAGE_NAME = 'nginx-app'
+        IMAGE_TAG = 'latest'
+        ARGOCD_SERVER = 'argocd-server'  // Update with your ArgoCD server URL
+        ARGOCD_APP_NAME = 'my-app'       // Update with your ArgoCD application name
     }
-
     stages {
-        stage('Checkout Code') {
-            steps {
-                script {
-                    // Checkout code from the Git repository
-                    git url: "${GIT_REPO}", branch: "main"  // Adjust the branch if needed
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
                     // Build the Docker image
-                    sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest ."
+                    docker.build("${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
-        
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Push the Docker image to the local registry
-                    sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
+                    // Log in to your Docker registry (localhost)
+                    sh "docker login ${REGISTRY}"
+                    // Push the image to your local registry
+                    sh "docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
-
         stage('Trigger ArgoCD Sync') {
             steps {
                 script {
-                    // Add your ArgoCD sync logic here
                     echo "Triggering ArgoCD Sync"
+
+                    // Login to ArgoCD (adjust credentials)
+                    sh """
+                    argocd login ${ARGOCD_SERVER} --username admin --password 5uI43-Ig8qr3nmty --insecure
+                    """
+
+                    // Sync the ArgoCD application
+                    sh "argocd app sync ${ARGOCD_APP_NAME} --revision ${IMAGE_TAG}"
                 }
             }
         }
-    }
-
-    post {
-        always {
-            script {
-                // This block is executed regardless of success or failure
-                // You can add cleanup actions, notifications, etc.
-                echo 'This will always run, regardless of pipeline success or failure.'
+        stage('Post Actions') {
+            steps {
+                echo "This will always run, regardless of pipeline success or failure."
             }
         }
     }
