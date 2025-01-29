@@ -1,9 +1,9 @@
 pipeline {
-    agent any  // This line specifies that the pipeline can run on any available agent.
+    agent any
     environment {
         DOCKER_IMAGE = "liormor75/nginx-app"
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_CREDENTIALS = "docker-credentials-id"
+        DOCKER_CREDENTIALS = "docker-credentials-id"  // Make sure this is the correct credential ID
     }
     stages {
         stage('Checkout') {
@@ -21,7 +21,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-credentials-id') {
+                    docker.withRegistry("https://index.docker.io/v1/", DOCKER_CREDENTIALS) {
                         docker.image(DOCKER_IMAGE).push()
                     }
                 }
