@@ -39,6 +39,7 @@ pipeline {
             steps {
                 script {
                     // Add your ArgoCD sync logic here
+                    echo "Triggering ArgoCD Sync"
                 }
             }
         }
@@ -46,9 +47,11 @@ pipeline {
 
     post {
         always {
-            // This block is executed regardless of success or failure
-            // You can add cleanup actions, notifications, etc.
-            echo 'This will always run, regardless of pipeline success or failure.'
+            script {
+                // This block is executed regardless of success or failure
+                // You can add cleanup actions, notifications, etc.
+                echo 'This will always run, regardless of pipeline success or failure.'
+            }
         }
     }
 }
