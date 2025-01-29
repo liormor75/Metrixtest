@@ -48,7 +48,7 @@ pipeline {
                     echo 'Triggering ArgoCD Sync'
                     withCredentials([usernamePassword(credentialsId: ARGOCD_CREDENTIALS_ID, usernameVariable: 'ARGOCD_USERNAME', passwordVariable: 'ARGOCD_PASSWORD')]) {
                         sh """
-                            argocd login ${ARGOCD_SERVER} --username \$ARGOCD_USERNAME --password \$ARGOCD_PASSWORD --insecure
+                            argocd login ${ARGOCD_SERVER} --username admin --password 5uI43-Ig8qr3nmty --insecure
                             argocd app sync ${ARGOCD_APP_NAME}
                         """
                     }
