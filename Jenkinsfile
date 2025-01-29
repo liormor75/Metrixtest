@@ -63,7 +63,7 @@ pipeline {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'ssh-kube-connection', keyFileVariable: 'SSH_PRIVATE_KEY')]) {
                         sh """
-                            ssh -i \$SSH_PRIVATE_KEY adminlior@192.168.49.2 'kubectl set image deployment/nginx-deployment nginx=localhost:5000/nginx-app:latest --record'
+                            ssh -i \$SSH_PRIVATE_KEY adminlior@127.0.0.1 'kubectl set image deployment/nginx-deployment nginx=localhost:5000/nginx-app:latest --record'
                         """
                     }
                 }
