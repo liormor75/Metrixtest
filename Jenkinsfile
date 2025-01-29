@@ -8,21 +8,21 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/liormor75/Metrixtest.git', branch: 'main'
+                git url: 'git@github.com:liormor75/Metrixtest.git', branch: 'main', credentialsId: 'github-ssh-key'
             }
         }
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build(DOCKER_IMAGE)
+                    def app = docker.build("${DOCKER_IMAGE}:latest")
                 }
             }
         }
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-credentials-id') {
-                        docker.image(DOCKER_IMAGE).push()
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS) {
+                        docker.image("${DOCKER_IMAGE}:latest").push()
                     }
                 }
             }
@@ -38,5 +38,3 @@ pipeline {
         }
     }
 }
-
-
