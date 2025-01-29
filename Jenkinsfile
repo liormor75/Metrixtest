@@ -46,7 +46,9 @@ pipeline {
 
     post {
         always {
-            // Any post actions, like cleaning up or sending notifications
+            // This block is executed regardless of success or failure
+            // You can add cleanup actions, notifications, etc.
+            echo 'This will always run, regardless of pipeline success or failure.'
         }
     }
 }
