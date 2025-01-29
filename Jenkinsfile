@@ -51,7 +51,7 @@ pipeline {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'ssh-kube-connection', keyFileVariable: 'SSH_PRIVATE_KEY')]) {
                         sh """
-                            ssh -i \$SSH_PRIVATE_KEY adminlior@cluster-ip 'kubectl config set-context --current --namespace=your-namespace'
+                            ssh -i \$SSH_PRIVATE_KEY adminlior@192.168.49.2 'kubectl config set-context --current --namespace=your-namespace'
                         """
                     }
                 }
