@@ -1,50 +1,73 @@
 pipeline {
     agent any
     environment {
-        REGISTRY = 'localhost:5000'
+        DOCKER_CREDENTIALS_ID = 'docker-credentials-id'  // Replace with your actual Jenkins credentials ID
+        DOCKER_REGISTRY = 'localhost:5000'
         IMAGE_NAME = 'nginx-app'
         IMAGE_TAG = 'latest'
-        ARGOCD_SERVER = 'argocd-server'  // Update with your ArgoCD server URL
-        ARGOCD_APP_NAME = 'my-app'       // Update with your ArgoCD application name
     }
     stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/liormor75/Metrixtest.git'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image
-                    docker.build("${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
+                    // Build Docker image
+                    sh 'docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .'
+                }
+            }
+        }
+        stage('Login to Docker Registry') {
+            steps {
+                script {
+                    // Use Jenkins credentials to login to Docker registry
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh """
+                            echo \$DOCKER_PASSWORD | docker login \$DOCKER_REGISTRY -u \$DOCKER_USERNAME --password-stdin
+                        """
+                    }
                 }
             }
         }
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Log in to your Docker registry (localhost)
-                    sh "docker login ${REGISTRY}"
-                    // Push the image to your local registry
-                    sh "docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                    // Push the Docker image to local registry
+                    sh 'docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}'
                 }
             }
         }
         stage('Trigger ArgoCD Sync') {
             steps {
                 script {
-                    echo "Triggering ArgoCD Sync"
-
-                    // Login to ArgoCD (adjust credentials)
-                    sh """
-                    argocd login ${ARGOCD_SERVER} --username admin --password 5uI43-Ig8qr3nmty --insecure
-                    """
-
-                    // Sync the ArgoCD application
-                    sh "argocd app sync ${ARGOCD_APP_NAME} --revision ${IMAGE_TAG}"
+                    // Trigger ArgoCD Sync
+                    echo 'Triggering ArgoCD Sync'
+                    // You can add ArgoCD command here to sync your app
+                    // Example: sh 'argocd app sync your-app-name'
                 }
             }
         }
         stage('Post Actions') {
             steps {
-                echo "This will always run, regardless of pipeline success or failure."
+                script {
+                    echo 'This will always run, regardless of pipeline success or failure.'
+                }
             }
+        }
+    }
+    post {
+        always {
+            // Actions to run after the pipeline completes, like cleanup or notifications
+            echo 'Pipeline completed.'
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
