@@ -1,11 +1,14 @@
 pipeline {
     agent any
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-login-id'  // Replace with your actual Jenkins credentials ID
+        DOCKER_CREDENTIALS_ID = 'docker-login-id'  // Replace with your actual Jenkins credentials ID for Docker login
         DOCKER_REGISTRY = 'localhost:5000'
         IMAGE_NAME = 'nginx-app'
         IMAGE_TAG = 'latest'
-            }
+        ARGOCD_CREDENTIALS_ID = 'argocd-login-id'  // Replace with your actual Jenkins credentials ID for ArgoCD login
+        ARGOCD_SERVER = '127.0.0.1:8081'   // Replace with your actual ArgoCD server address
+        ARGOCD_APP_NAME = 'test1'           // Replace with your actual ArgoCD application name
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -47,7 +50,7 @@ pipeline {
                     echo 'Triggering ArgoCD Sync'
                     withCredentials([usernamePassword(credentialsId: ARGOCD_CREDENTIALS_ID, usernameVariable: 'ARGOCD_USERNAME', passwordVariable: 'ARGOCD_PASSWORD')]) {
                         sh """
-                            argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
+                            argocd login ${ARGOCD_SERVER} --username \$ARGOCD_USERNAME --password \$ARGOCD_PASSWORD --insecure
                             argocd app sync ${ARGOCD_APP_NAME}
                         """
                     }
