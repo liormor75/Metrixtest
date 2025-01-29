@@ -28,8 +28,7 @@ pipeline {
                 }
             }
         }
-    }
-        stage('Trigger ArgoCD Sync') {
+        stage('Trigger ArgoCD Sync') {  // ✅ This stage is correctly placed inside `stages`
             steps {
                 script {
                     build job: 'Trigger-ArgoCD-Sync', wait: false, parameters: [
@@ -39,4 +38,4 @@ pipeline {
             }
         }
     }
-
+}
