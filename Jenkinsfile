@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/liormor75/nginx-ingress.git', branch: 'main'
+                git url: 'https://github.com/liormor75/nginx-ingress.yaml', branch: 'main'
             }
         }
         stage('Build Docker Image') {
