@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/liormor75/Metrixtest.git'
+                git url: 'https://github.com/liormor75/Metrixtest.git', branch: 'main'
             }
         }
         stage('Build Docker Image') {
