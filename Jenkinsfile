@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-credentials-id'  // Replace with your actual Jenkins credentials ID
+        DOCKER_CREDENTIALS_ID = 'docker-login-id'  // Replace with your actual Jenkins credentials ID
         DOCKER_REGISTRY = 'localhost:5000'
         IMAGE_NAME = 'nginx-app'
         IMAGE_TAG = 'latest'
