@@ -3,7 +3,7 @@ pipeline {
     
     // Define environment variables for use throughout the pipeline
     environment {
-        KUBECONFIG = '/home/adminlior/.kube'  // Path to the kubeconfig file, it will be replaced by Jenkins credentials
+        KUBECONFIG = '/home/adminlior/config'  // Path to the kubeconfig file, it will be replaced by Jenkins credentials
         DOCKER_CREDENTIALS_ID = 'docker-login-id'  // Replace with your actual Docker login credentials ID
         DOCKER_REGISTRY = 'localhost:5000'
         IMAGE_NAME = 'nginx-app'
