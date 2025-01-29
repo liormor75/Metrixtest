@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: "docker.io/liormor75/nginx-app:latest"
+        image: "docker.io/liormo245/nginx-app:latest"
         ports:
         - containerPort: 80
 
