@@ -5,8 +5,7 @@ pipeline {
         DOCKER_REGISTRY = 'localhost:5000'
         IMAGE_NAME = 'nginx-app'
         IMAGE_TAG = 'latest'
-        ARGOCD_CREDENTIALS_ID = 'argocd-login-id'  // Replace with your actual ArgoCD credentials ID
-    }
+            }
     stages {
         stage('Checkout') {
             steps {
@@ -48,7 +47,7 @@ pipeline {
                     echo 'Triggering ArgoCD Sync'
                     withCredentials([usernamePassword(credentialsId: ARGOCD_CREDENTIALS_ID, usernameVariable: 'ARGOCD_USERNAME', passwordVariable: 'ARGOCD_PASSWORD')]) {
                         sh """
-                            argocd login ${ARGOCD_SERVER} --username admin --password 5uI43-Ig8qr3nmty --insecure
+                            argocd login 127.0.0.1:8081 --username admin --password 5uI43-Ig8qr3nmty --insecure
                             argocd app sync ${ARGOCD_APP_NAME}
                         """
                     }
