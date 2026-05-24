@@ -1,0 +1,209 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'CSV_REPORT_1_URL', defaultValue: 'https://splunk.example.com/api/open_banking_report_1.csv', description: 'URL to Availability report (report_1)')
+        string(name: 'CSV_REPORT_2_URL', defaultValue: 'https://splunk.example.com/api/open_banking_report_2.csv', description: 'URL to API Performance report (report_2)')
+        string(name: 'CSV_REPORT_5_URL', defaultValue: 'https://splunk.example.com/api/open_banking_report_5.csv', description: 'URL to Error Codes report (report_5)')
+        string(name: 'SPLUNK_AUTH_TOKEN', defaultValue: '', description: 'Splunk API authentication token (optional)')
+        string(name: 'OUTPUT_FILENAME', defaultValue: 'banking_reports', description: 'Output filename without extension')
+        booleanParam(name: 'ENABLE_EMAIL_NOTIFICATION', defaultValue: false, description: 'Send email notification on completion')
+    }
+    
+    environment {
+        REPORT_DIR = "${WORKSPACE}/reports"
+        OUTPUT_DIR = "${WORKSPACE}/output"
+        PYTHON_VENV = "${WORKSPACE}/venv"
+        TIMESTAMP = sh(script: "date +%Y%m%d_%H%M%S", returnStdout: true).trim()
+    }
+    
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    echo "🔧 Setting up Python environment..."
+                    sh '''
+                        mkdir -p ${REPORT_DIR}
+                        mkdir -p ${OUTPUT_DIR}
+                        
+                        # Create Python virtual environment
+                        python3 -m venv ${PYTHON_VENV}
+                        . ${PYTHON_VENV}/bin/activate
+                        
+                        # Install dependencies
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
+        
+        stage('Download Reports') {
+            steps {
+                script {
+                    echo "📥 Downloading Open Banking reports from Splunk..."
+                    sh '''
+                        . ${PYTHON_VENV}/bin/activate
+                        cd ${REPORT_DIR}
+                        
+                        # Function to download with auth
+                        download_report() {
+                            local url=$1
+                            local output=$2
+                            
+                            if [ -n "${SPLUNK_AUTH_TOKEN}" ]; then
+                                curl -s -H "Authorization: Bearer ${SPLUNK_AUTH_TOKEN}" \
+                                    -o "$output" "$url"
+                            else
+                                curl -s -o "$output" "$url"
+                            fi
+                            
+                            if [ ! -f "$output" ]; then
+                                echo "ERROR: Failed to download $output"
+                                return 1
+                            fi
+                            return 0
+                        }
+                        
+                        # Download all 3 reports
+                        echo "  • Downloading report_1 (Availability)..."
+                        download_report "${CSV_REPORT_1_URL}" "open_banking_report_1.csv" || exit 1
+                        
+                        echo "  • Downloading report_2 (API Performance)..."
+                        download_report "${CSV_REPORT_2_URL}" "open_banking_report_2.csv" || exit 1
+                        
+                        echo "  • Downloading report_5 (Error Codes)..."
+                        download_report "${CSV_REPORT_5_URL}" "open_banking_report_5.csv" || exit 1
+                        
+                        echo "✓ All reports downloaded successfully"
+                        ls -lh *.csv
+                    '''
+                }
+            }
+        }
+        
+        stage('Validate Reports') {
+            steps {
+                script {
+                    echo "✓ Validating CSV files..."
+                    sh '''
+                        . ${PYTHON_VENV}/bin/activate
+                        cd ${REPORT_DIR}
+                        
+                        for file in open_banking_report_1.csv open_banking_report_2.csv open_banking_report_5.csv; do
+                            if [ ! -f "$file" ]; then
+                                echo "ERROR: $file not found"
+                                exit 1
+                            fi
+                            
+                            size=$(wc -c < "$file")
+                            lines=$(wc -l < "$file")
+                            
+                            if [ $size -eq 0 ]; then
+                                echo "⚠ WARNING: $file is empty"
+                            else
+                                echo "✓ $file: $lines lines, $(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo ${size} bytes)"
+                            fi
+                        done
+                    '''
+                }
+            }
+        }
+        
+        stage('Merge Reports') {
+            steps {
+                script {
+                    echo "🔄 Merging CSV reports into Excel..."
+                    sh '''
+                        . ${PYTHON_VENV}/bin/activate
+                        cd ${WORKSPACE}
+                        
+                        OUTPUT_FILE="${OUTPUT_DIR}/${OUTPUT_FILENAME}_${TIMESTAMP}.xlsm"
+                        
+                        python3 splunk_report_merger.py \
+                            ${REPORT_DIR}/open_banking_report_1.csv \
+                            ${REPORT_DIR}/open_banking_report_2.csv \
+                            ${REPORT_DIR}/open_banking_report_5.csv \
+                            -o "$OUTPUT_FILE"
+                        
+                        if [ ! -f "$OUTPUT_FILE" ]; then
+                            echo "ERROR: Failed to create Excel file"
+                            exit 1
+                        fi
+                        
+                        echo "✓ Excel file created successfully"
+                        ls -lh ${OUTPUT_DIR}/*.xlsm
+                    '''
+                }
+            }
+        }
+        
+        stage('Archive Artifacts') {
+            steps {
+                script {
+                    echo "📦 Archiving merged Excel file..."
+                    archiveArtifacts artifacts: 'output/*.xlsm', allowEmptyArchive: false
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                script {
+                    echo "🧹 Cleaning up temporary files..."
+                    sh '''
+                        rm -rf ${REPORT_DIR}/*.csv
+                        rm -rf ${PYTHON_VENV}
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            script {
+                echo "✓ Pipeline completed successfully"
+                
+                if ("${ENABLE_EMAIL_NOTIFICATION}" == "true") {
+                    sh '''
+                        OUTPUT_FILE=$(ls -t ${OUTPUT_DIR}/*.xlsm 2>/dev/null | head -1)
+                        if [ -n "$OUTPUT_FILE" ]; then
+                            FILE_SIZE=$(du -h "$OUTPUT_FILE" | cut -f1)
+                            echo "Report merged successfully: $(basename $OUTPUT_FILE) ($FILE_SIZE)" | \
+                            mail -s "✓ Open Banking Reports Merged - ${BUILD_NUMBER}" \
+                            ${BUILD_USER_EMAIL}
+                        fi
+                    '''
+                }
+            }
+        }
+        failure {
+            script {
+                echo "✗ Pipeline failed - check logs"
+                
+                if ("${ENABLE_EMAIL_NOTIFICATION}" == "true") {
+                    sh '''
+                        echo "The Open Banking report merge job failed. Check the logs for details." | \
+                        mail -s "✗ Open Banking Report Merge FAILED - Build #${BUILD_NUMBER}" \
+                        ${BUILD_USER_EMAIL}
+                    '''
+                }
+            }
+        }
+        always {
+            script {
+                echo "Build status: ${currentBuild.result}"
+                // Clean workspace
+                cleanWs()
+            }
+        }
+    }
+}
