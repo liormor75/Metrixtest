@@ -1,0 +1,14 @@
+api_name,all-count,all-corporate-count,all-perc5,all-median,all-perc95,all-average,success-count,success-corporate-count,success-perc5,success-median,success-perc95,success-average
+all,40478102,9229,39,114,340,153,39928183,9226,39,115,341,143
+create-consent,16952,117,58,72,576,139,16187,117,61,72,584,138
+delete-consent,2580,0,35,44,67,50,893,0,46,54,74,59
+get-card-transactions-list,9419873,2086,131,167,493,223,9418429,2084,131,167,492,219
+get-consent-information,4541866,0,38,43,58,51,4537099,0,38,43,58,48
+get-consent-status,5514247,0,37,42,57,50,5512472,0,37,42,57,47
+read-card-balances,9717474,4341,109,133,456,187,9715844,4341,109,133,455,182
+read-cards-details,2523377,126,41,47,65,54,2523094,126,41,47,65,52
+read-list-of-cards,5511491,2423,45,57,141,204,5499200,2422,45,57,140,154
+read-list-of-loans-accounts,2731094,136,51,115,232,158,2338886,136,98,119,242,159
+read-loan-account-balances,300635,0,55,109,147,107,203352,0,100,116,156,125
+read-loan-account-details,90002,0,110,126,171,137,89894,0,110,126,171,137
+read-transaction-list-of-a-loan-account,108511,0,70,147,222,144,72833,0,134,157,245,171
